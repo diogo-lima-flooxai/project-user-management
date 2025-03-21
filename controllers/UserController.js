@@ -32,18 +32,17 @@ class UserController {
 
       let result = Object.assign({}, userOld, values);
 
-        this.getPhoto(this.formUpdateEl).then(
-          (content) => {
+      this.getPhoto(this.formUpdateEl).then(
+        (content) => {
+          if (!values.photo) {
+            result._photo = userOld._photo;
+          } else {
+            result._photo = content;
+          }
 
-            if(!values.photo) {
-              result._photo = userOld._photo 
-            } else {
-              result._photo = content;
-            }
+          tr.dataset.user = JSON.stringify(result);
 
-            tr.dataset.user = JSON.stringify(result);
-
-            tr.innerHTML = `
+          tr.innerHTML = `
                 <td><img src="${
                   result._photo
                 }" alt="User Image" class="img-circle img-sm"></td>
@@ -55,20 +54,20 @@ class UserController {
                     <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
                     <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
                 </td>`;
-    
-            this.addEventsTr(tr);
-    
-            this.updateCount();   
 
-            this.formUpdateEl.reset()
-            btn.disabled = false;
+          this.addEventsTr(tr);
 
-            this.showPanelCreate();
-          },
-          (e) => {
-            console.error(e);
-          }
-        );
+          this.updateCount();
+
+          this.formUpdateEl.reset();
+          btn.disabled = false;
+
+          this.showPanelCreate();
+        },
+        (e) => {
+          console.error(e);
+        }
+      );
     });
   }
 
@@ -181,7 +180,7 @@ class UserController {
         <td>${Utils.dateFormat(dataUser.register)}</td>
       <td>
           <button type="button" class="btn btn-primary btn-edit btn-xs btn-flat">Editar</button>
-          <button type="button" class="btn btn-danger btn-xs btn-flat">Excluir</button>
+          <button type="button" class="btn btn-danger btn-delete btn-xs btn-flat">Excluir</button>
       </td>`;
 
     this.addEventsTr(tr);
@@ -191,7 +190,14 @@ class UserController {
     this.updateCount();
   }
 
-  addEventsTr(tr){
+  addEventsTr(tr) {
+    tr.querySelector(".btn-delete").addEventListener("click", (e) => {
+      if (confirm("Deseja realmente excluir ?")) {
+        tr.remove();
+
+        this.updateCount();
+      }
+    });
 
     tr.querySelector(".btn-edit").addEventListener("click", (e) => {
       let json = JSON.parse(tr.dataset.user);
@@ -199,7 +205,9 @@ class UserController {
       this.formUpdateEl.dataset.trIndex = tr.sectionRowIndex;
 
       for (let name in json) {
-        let field = this.formUpdateEl.querySelector("[name=" + name.replace("_", "") + "]");
+        let field = this.formUpdateEl.querySelector(
+          "[name=" + name.replace("_", "") + "]"
+        );
 
         if (field) {
           switch (field.type) {
@@ -228,8 +236,6 @@ class UserController {
 
       this.showPanelUpdate();
     });
-
-
   }
 
   showPanelCreate() {
